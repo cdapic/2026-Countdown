@@ -1,0 +1,5 @@
+{
+  "name": "2026 Countdown",
+  "description": "A precision countdown timer to New Year 2026 with network time synchronization, audio cues, and pyrotechnic visual effects.",
+  "requestFramePermissions": []
+}
