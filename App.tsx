@@ -86,31 +86,36 @@ const App: React.FC = () => {
     setAppState(AppState.RUNNING);
   };
 
-  const handleTestMode = () => {
-    // Determine how much time is left actually
+  const handleToggleTestMode = () => {
+    // If currently in test mode (offset is not 0), exit it
+    if (testModeOffset !== 0) {
+      setTestModeOffset(0);
+      setAppState(AppState.RUNNING); // Ensure we go back to running state if previously complete
+      prevSecondsRef.current = -1; // Reset audio trigger
+      return;
+    }
+
+    // Otherwise, ENTER test mode (Jump to T-15s)
     const targetDate = new Date(TARGET_DATE_ISO).getTime();
     const nowReal = Date.now() + offset;
     const realDiff = targetDate - nowReal;
 
     // We want to simulate that we are 15 seconds away
     // So: SimulatedNow = Target - 15s
-    // OffsetNeeded = SimulatedNow - NowReal
-    // OffsetNeeded = (Target - 15s) - NowReal
-    // OffsetNeeded = Target - 15s - (Target - RealDiff) = RealDiff - 15s
+    // OffsetNeeded = SimulatedNow - NowReal = (Target - 15s) - NowReal
     
     const desiredSecondsLeft = 15;
     const shift = realDiff - (desiredSecondsLeft * 1000);
     
     setTestModeOffset(shift);
-    
-    // Reset state if it was complete
     setAppState(AppState.RUNNING); 
-    prevSecondsRef.current = -1; // Reset audio trigger
+    prevSecondsRef.current = -1; 
   };
 
 
   // 4. Render Helpers
   const isCritical = timeLeft.totalSeconds <= CRITICAL_THRESHOLD_SECONDS && timeLeft.totalSeconds > 0;
+  const isTestModeActive = testModeOffset !== 0;
 
   if (appState === AppState.LOADING) {
     return (
@@ -154,8 +159,8 @@ const App: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-slate-900 to-transparent" />
       </div>
 
-      {/* Critical Red Pulse Overlay */}
-      <div className={`absolute inset-0 pointer-events-none bg-red-900/10 mix-blend-overlay transition-opacity duration-100 ${isCritical ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
+      {/* Critical Pulse Overlay - Changed to Gold/Amber */}
+      <div className={`absolute inset-0 pointer-events-none bg-amber-500/10 mix-blend-overlay transition-opacity duration-100 ${isCritical ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
 
       {/* Fireworks Effect */}
       <Fireworks active={appState === AppState.COMPLETE} />
@@ -198,14 +203,14 @@ const App: React.FC = () => {
          )}
       </main>
 
-      {/* Concealed Test Trigger - Bottom Right Corner */}
-      {/* Increased opacity slightly to ensure it's findable (20%), and ensured high z-index */}
+      {/* Toggle Test Mode Trigger - Bottom Right Corner */}
       <button 
-          onClick={handleTestMode}
-          className="fixed bottom-2 right-2 z-50 p-2 text-[10px] text-white/20 hover:text-white/80 font-mono tracking-widest uppercase transition-colors cursor-pointer select-none"
-          title="Test Mode"
+          onClick={handleToggleTestMode}
+          className={`fixed bottom-2 right-2 z-50 p-2 text-[10px] font-mono tracking-widest uppercase transition-colors cursor-pointer select-none 
+            ${isTestModeActive ? 'text-amber-400 hover:text-amber-200 opacity-100' : 'text-white/20 hover:text-white/80'}`}
+          title={isTestModeActive ? "Exit Test Mode" : "Enter Test Mode"}
       >
-        DEV_TEST
+        {isTestModeActive ? "EXIT_TEST" : "DEV_TEST"}
       </button>
 
     </div>
